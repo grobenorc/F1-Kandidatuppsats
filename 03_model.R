@@ -5,6 +5,7 @@ devtools::install_github("stan-dev/cmdstanr")
 library(cmdstanr)
 install_cmdstan()
 
+setwd("C:/Users/claes/OneDrive/Universitet/Statistik Fortsättningskurs/STAH11 Kandidatuppsats/Test_pa_egna_artal")
 ###* Finished installing CmdStan to C:/Users/claes/OneDrive/Personligt/Windows/Dokument/.cmdstan/cmdstan-2.30.1
 ###CmdStan path set to: C:/Users/claes/OneDrive/Personligt/Windows/Dokument/.cmdstan/cmdstan-2.30.1
 
@@ -16,11 +17,11 @@ library(readr)
 
 
 # read data
-f1_dat_finished  <- read_rds("dat/f1_dat_finished.rds")
+f1_dat_finished  <- read_rds("dat/f1_dat_finished_ink_grid.rds")
 
 # basic model
 fit_basic <- brm(
-  formula = prop_trans ~ 0 + (1 | driver) + (1 | driver:year) + (1 | constructor) + (1 | constructor:year),
+  formula = prop_trans ~ 0 + (1 | driver) + (1 | driver:year) + (1 | constructor) + (1 | constructor:year) + (1|gridprop_trans) + (1|gridprop_trans:year),
   family  = Beta(),
   data    = f1_dat_finished,
   backend = "cmdstanr",
