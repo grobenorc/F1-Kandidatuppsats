@@ -1,10 +1,9 @@
-# Code accompanying the manuscript "Bayesian Analysis of Formula One Race Results"
-# Last edited 2022-02-17 by @vankesteren
-# Contents: data processing, status filtering, outcome computation, some EDA
+setwd("C:/Users/claes/OneDrive/Universitet/Statistik Fortsättningskurs/STAH11 Kandidatuppsats/Test_pa_egna_artal")
+
 library(tidyverse)
 library(ggplot2)
 
-f1_dat <- read_rds("dat/f1_dat.rds")
+f1_dat <- read_rds("dat/f1_dat_ink_grid.rds")
 
 # Data processing ----
 # convert to factors
@@ -32,13 +31,15 @@ f1_dat_finished <-
   mutate(classified = compute_classified(status)) %>%
   filter(classified == "classified") %>%
   mutate(
-    position_prop = (n() - position) / (n() - 1),        # how many classified drivers did you beat?
-    prop_trans = (position_prop * (n() - 1) + 0.5) / n() # https://stats.stackexchange.com/a/134297/116878
+    position_prop = (n() - position) / (n() - 1),         # how many classified drivers did you beat?
+    prop_trans = (position_prop * (n() - 1) + 0.5) / n(), # https://stats.stackexchange.com/a/134297/116878
+    grid_prop = (n() - rank(grid)) / (n()-1),
+    gridprop_trans = (grid_prop * (n() - 1)+0.5) / n()
   ) %>%
   ungroup() %>%
   select(-classified)
 
-write_rds(f1_dat_finished, "dat/f1_dat_finished.rds")
+write_rds(f1_dat_finished, "dat/f1_dat_finished_ink_grid.rds")
 
 # Some EDA ----
 # finish position
@@ -46,7 +47,7 @@ ggplot(f1_dat_finished, aes(x = factor(position))) +
   geom_bar() +
   labs(
     title = "Distribution of finish positions",
-    subtitle = "F1 hybrid era (2014-2020)",
+    subtitle = "F1 hybrid era (1950-2021)",
     x = "Finish position",
     y = "Count"
   )
@@ -55,7 +56,7 @@ ggsave("img/eda_finish_position.png", width = 9, height = 6)
 
 # basic plot
 f1_dat_finished %>%
-  filter(driver %in% c("hamilton", "raikkonen", "giovinazzi")) %>%
+  filter(driver %in% c("hamilton", "vettel", "alonso")) %>%
   ggplot(aes(x = factor(position), fill = driver)) +
   geom_bar(position = position_dodge(preserve = "single")) +
   labs(
@@ -71,7 +72,7 @@ f1_dat_finished %>%
 ggsave("img/eda_finish_drivers.png", width = 12, height = 9)
 
 f1_dat_finished %>%
-  filter(driver %in% c("hamilton", "raikkonen", "giovinazzi"), year != 2014) %>%
+  filter(driver %in% c("hamilton", "vettel", "alonso"), year != 2014) %>%
   ggplot(aes(x = prop_trans, fill = driver)) +
   geom_density(alpha = 0.5, bw = 0.1) +
   labs(
