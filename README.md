@@ -13,4 +13,5 @@ R filer: \
 6: Inferens av modellen \
 7: Predict \
 8: Effekt av startpostion på utfallet \
+9: Inferens på effekt av startposition \
 10: Deskriptiv statistik
