@@ -49,6 +49,28 @@ results_2<-left_join(
 # Circuits
 races <- left_join(races %>% select(-name,-url), circuits %>% select(-url), by='circuitId')
 
+##### Statistik omkörningar över tid #####
+results_omkorningar_1 <- results_2 
+results_omkorningar_1$positionText <- as.numeric(results_omkorningar_1$positionText)  
+results_omkorningar <- results_omkorningar_1 %>% drop_na(positionText)
+summering_omkorningar <- results_omkorningar %>% arrange(name, grid) %>%
+  group_by(raceId) %>% 
+  mutate(rank.grid = rank(grid), rank.position= rank(positionOrder), netto.overtakes = rank(positionOrder)- rank(grid))
+summering_omkorningar$absolut_overtakes <- abs(summering_omkorningar$netto.overtakes)
+summering_omkorningar_results <- summering_omkorningar %>%
+  group_by(name, year) %>%
+  summarize(med_omkorningar = median(absolut_overtakes, na.rm=TRUE)) %>%
+  ggplot(aes(x = factor(year), y = med_omkorningar, color = med_omkorningar)) +
+  geom_boxplot(alpha = .25) + theme_fivethirtyeight() +
+  geom_jitter(shape = 16, position = position_jitter(0.2), size = 1.5) +
+  geom_smooth(method = 'loess', aes(group=1), color = 'red', lty = 2, size = 0.5) +
+  scale_color_gradientn(name = "", colours = rev(viridis::viridis(20))) + 
+  scale_x_discrete(breaks=seq(min(summering_omkorningar$year),max(summering_omkorningar$year),10)) + 
+  labs(title = "Förändring grid/slutposition per år",
+       subtitle = "Absoluttal median grupperad per race") +
+  guides(color = FALSE)
+summering_omkorningar_results
+ggsave("desk_img/omkorningar_per_ar.png", plot = summering_omkorningar_results, width = 12, height = 6, bg = "white")
 
 
 ##### Deskriptiv statistik fÃ¶rare #####
