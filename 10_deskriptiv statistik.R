@@ -1,0 +1,313 @@
+
+setwd("C:/Users/claes/OneDrive/Universitet/Statistik Fortsättningskurs/STAH11 Kandidatuppsats/Test_egen_kval_och_grid")
+#https://www.kaggle.com/code/jonathanbouchet/f1-data-analysis
+#Deskriptiv dataanalys
+
+
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(ggthemes)
+library(RColorBrewer)
+library(grid)
+library(gridExtra)
+library(ggrepel)
+library(viridis)
+library(circlize)
+
+##### Data #####
+
+## Results
+results <- read_csv("dat/f1db_csv/results.csv")
+results$fastestLapSpeed <- as.numeric(results$fastestLapSpeed)
+convertFastestLap <- function(x){
+  if(length(x)>0){
+    curMinute<-as.numeric(strsplit(x,":")[[1]][1])
+    curSecond<-as.numeric(strsplit(strsplit(x,":")[[1]][2],"\\.")[[1]][1])
+    return(curMinute*60 + curSecond)
+  }
+  else if(length(x)==0){
+    return(NA)
+  }
+}
+results$fastestLapTimeNum <- sapply(results$fastestLapTime, convertFastestLap)
+
+## Races
+races   <- read_csv("dat/f1db_csv/races.csv")
+races$date<-as.Date(races$date,"%Y-%m-%d")
+races$name<-gsub(" Grand Prix","",races$name)
+results_2<-left_join(
+  results %>% dplyr::select(-time, -fastestLapTime), 
+  races %>% dplyr::select(-time, -url), 
+  by='raceId')
+
+## circuits
+circuits   <- read_csv("dat/f1db_csv/circuits.csv")
+races<-left_join(races %>% select(-name,-url), circuits %>% select(-url), by='circuitId')
+
+
+##### Går bilarna långsammare idag? #####
+results_2 %>% 
+  dplyr::filter(year>2004) %>% 
+  dplyr::group_by(name,year) %>% 
+  summarize(medianFastestLapSpeed = median(fastestLapSpeed,na.rm=T)) %>% 
+  ggplot(aes(x=factor(year),y= medianFastestLapSpeed,color=medianFastestLapSpeed)) + 
+  geom_point() + theme_fivethirtyeight() + 
+  scale_color_gradientn(name="",colours=rev(viridis::viridis(20))) +
+  theme(
+    axis.text.x = element_text(size=6,angle=45),
+    strip.text.x = element_text(size = 10)) + facet_wrap(~name,ncol=9) + 
+  labs(title='Fastest Lap per Circuit, from 2005 to 2021',
+       subtitle='speed in km/h') +
+  guides(color=FALSE)
+
+
+
+
+##### Deskriptiv statistik förare #####
+drivers   <- read_csv("dat/f1db_csv/drivers.csv")
+drivers$age_driver <- as.numeric(format(Sys.Date(), "%Y")) - as.numeric(format(drivers$dob, "%Y"))
+
+#load driversStandings
+driversStandings <- read.csv("dat/f1db_csv/driver_standings.csv")
+drivers<-left_join(drivers %>% select(-url), driversStandings,by='driverId')
+
+results_3 <- left_join(
+  results, 
+  drivers %>% dplyr::rename(number_drivers = number) %>% select(-points, -position, -positionText),
+  by=c('driverId','raceId')) 
+
+results_3 <- left_join(results_3,races %>% select(-time), by='raceId')
+
+winsDis <- results_3 %>% 
+  filter(position==1) %>% 
+  group_by(driverRef, circuitRef) %>% 
+  summarize(count=n()) %>%
+  mutate(allWins = sum(count)) %>%
+  ggplot(aes(x=allWins)) +
+  geom_histogram(bins=50) + theme_fivethirtyeight() + ggtitle("Distribution of the number of victories")
+plot(winsDis)
+
+
+#Barplot av de tio förarna med flest vinster, ABSOLUTTAL
+winsBar_10 <- results_3 %>% 
+  filter(position==1) %>%
+  group_by(driverRef, country) %>% 
+  summarise(count=n()) %>%
+  mutate(allWins = sum(count))
+top10_driver_win <- as.numeric(sort(unique(winsBar_10$allWins), decreasing = TRUE)[10])
+
+winsBar_10_1 <- results_3 %>% 
+  dplyr::filter(position==1) %>% 
+  dplyr::group_by(driverRef, country) %>% 
+  dplyr::summarize(count=n()) %>%
+  dplyr::mutate(allWins = sum(count)) %>% 
+  dplyr::filter(allWins > top10_driver_win)
+
+winsBar_10_1_plot <- winsBar_10_1 %>%
+  dplyr::group_by(driverRef, country) %>% 
+  ggplot(aes(x=reorder(driverRef, allWins),y= count)) +
+  geom_bar(aes(fill=country),stat='identity',color='white',size=.1) + 
+  coord_flip() + theme_fivethirtyeight() + 
+  scale_fill_manual(name="",values = viridis::viridis(32)) +
+  guides(fill=guide_legend(ncol=5)) + 
+  theme(legend.text= element_text(size=10),
+        legend.key.size = unit(.1, "cm"),
+        legend.position=c(.8,.1)) + 
+  labs(title="Antal vinster per förare",
+       subtitle="De 10 bästa")
+plot(winsBar_10_1_plot)
+ggsave("desk_img/vinster_per_forare_topp_10.png", plot = winsBar_10_1_plot, width = 9, height = 6, bg = "white")
+
+
+#Barplot av de tio förarna med flest vinster, % av antal starter
+results_4 <- left_join(
+  results, 
+  drivers %>% dplyr::rename(number_drivers = number) %>% select(-points, -position, -positionText),
+  by=c('driverId','raceId')) 
+results_4 <- left_join(results_4,races %>% select(-time), by='raceId')
+results_4$vinst <- ifelse(results_4$position == 1, 1, 0)
+
+winsBar_10_per <- results_4 %>% 
+  group_by(driverRef) %>% 
+  summarize(count = n(), vinster = sum(vinst)) %>%
+  mutate(vinstprocent = vinster / count) %>%
+  filter(count > 5)
+top10_driver_win_per <- as.numeric(sort(unique(winsBar_10_per$vinstprocent), decreasing = TRUE)[10])
+
+winsBar_10_per <- winsBar_10_per %>% 
+  dplyr::filter(vinstprocent >= top10_driver_win_per)
+
+winsBar_10_per_plot <- ggplot(data=winsBar_10_per, aes(x= reorder(driverRef, vinstprocent), y = vinstprocent)) +
+  geom_bar(aes(fill=driverRef), stat="identity", color = 'white', size = .1) +
+  scale_y_continuous(labels = scales::percent) +
+  coord_flip() +
+  theme_fivethirtyeight() +
+  scale_fill_manual(name="",values = viridis::viridis(10)) +
+  labs(title="Andel vinster per race per förare i %",
+       subtitle="De 10 bästa")
+plot(winsBar_10_per_plot)
+ggsave("desk_img/vinstprocent_per_forare_topp_10.png", plot = winsBar_10_per_plot, width = 9, height = 6, bg = "white")
+
+
+
+
+
+##### Deskriptiv statistik konstruktör #####
+constructors <- read_csv("dat/f1db_csv/constructors.csv")
+constructorStandings <- read_csv("dat/f1db_csv/constructor_standings.csv")
+constructorResults<-read_csv("dat/f1db_csv/constructor_results.csv")
+constructorResults<-left_join(
+  constructorResults, 
+  races %>% rename(name_races = name), by='raceId')
+constructorResults <- left_join(constructorResults, constructors %>% select(-url) %>% rename(name_constructor = name), by='constructorId')
+constructorResults <- left_join(constructorResults, constructorStandings %>% rename(point_constructor = points) %>% select(-positionText), by=c('constructorId','raceId'))
+
+
+  
+winConstructors <- constructorResults %>% 
+  filter(wins == 1, name_constructor %in% c('Ferrari','McLaren','Williams','Brabham','BRM', 'Tyrrell', 'Red Bull', 'Renault', 'Benetton', 'Mercedes', 'Team Lotus', 'Ligier', 'Jordan', 'Lotus F1', 'March' )) %>%
+  group_by(name_constructor) %>% 
+  summarize(count=n()) %>% 
+  filter(count>0) %>%
+  ggplot(aes(x=reorder(name_constructor, count),y= count,fill=count)) +
+  geom_bar(stat='identity',color='white',size=.1) + 
+  coord_flip() + theme_fivethirtyeight() + 
+  scale_fill_gradientn(name="",colors = viridis::viridis(15)) +
+  guides(fill=guide_legend(ncol=3)) + 
+  theme(legend.text= element_text(size=10),
+        legend.key.size = unit(.1, "cm"),
+        legend.position=c(.65,.20)) + 
+  labs(title="Antal vinster per Team",
+       subtitle="De 15 bästa") + guides(fill=F)
+plot(winConstructors)
+ggsave("desk_img/vinst_per_konstruktor_topp_15.png", plot = winConstructors, width = 9, height = 6, bg = "white")
+
+
+#Barplot av de tio med konstruktörerna högst vinstprocent % av antal starter
+winsTeam <- constructorResults %>% 
+  group_by(name_constructor, year) %>% 
+  summarize(count = n(), vinster = max(wins)) %>%
+  mutate(vinstprocent = vinster / count) %>%
+  filter(vinster > 0)
+
+winsTeam_per <- winsTeam  %>% 
+  summarize(count = sum(count), vinster = sum(vinster)) %>%
+  mutate(vinstprocent = vinster / count) %>%
+  filter(count > 5)
+top10_driver_team_per <- winsTeam_per[order(winsTeam_per$vinstprocent, decreasing = TRUE), ]
+
+
+
+winsTeam_15_per <- winsTeam_per %>% 
+  dplyr::filter(vinstprocent >= top10_driver_team_per)
+
+winsTeam_15_per_plot <- ggplot(data=top10_driver_team_per[1:15, ], aes(x= reorder(name_constructor, vinstprocent), y = vinstprocent)) +
+  geom_bar(aes(fill=name_constructor), stat="identity", color = 'white', size = .1) +
+  scale_y_continuous(labels = scales::percent) +
+  coord_flip() +
+  theme_fivethirtyeight() +
+  scale_fill_manual(name="",values = viridis::viridis(15)) +
+  labs(title="Andel vinster per race per team i %",
+       subtitle="De 15 bästa")
+plot(winsTeam_15_per_plot)
+ggsave("desk_img/vinstprocent_per_team_topp_15.png", plot = winsTeam_15_per_plot, width = 9, height = 6, bg = "white")
+
+
+
+##### Chordiagram på relation mellan förare och team
+
+### Data ###
+results <- read_csv("dat/f1db_csv/results.csv")
+results$fastestLapSpeed <- as.numeric(results$fastestLapSpeed)
+convertFastestLap <- function(x){
+  if(length(x)>0){
+    curMinute<-as.numeric(strsplit(x,":")[[1]][1])
+    curSecond<-as.numeric(strsplit(strsplit(x,":")[[1]][2],"\\.")[[1]][1])
+    return(curMinute*60 + curSecond)
+  }
+  else if(length(x)==0){
+    return(NA)
+  }
+}
+results$fastestLapTimeNum <- sapply(results$fastestLapTime, convertFastestLap)
+## Races
+races   <- read_csv("dat/f1db_csv/races.csv")
+races$date<-as.Date(races$date,"%Y-%m-%d")
+races$name<-gsub(" Grand Prix","",races$name)
+results_2<-left_join(
+  results %>% dplyr::select(-time, -fastestLapTime), 
+  races %>% dplyr::select(-time, -url), 
+  by='raceId')
+## circuits
+circuits   <- read_csv("dat/f1db_csv/circuits.csv")
+races <- left_join(races %>% select(-name,-url), circuits %>% select(-url), by='circuitId')
+## Drivers
+drivers   <- read_csv("dat/f1db_csv/drivers.csv")
+drivers$age_driver <- as.numeric(format(Sys.Date(), "%Y")) - as.numeric(format(drivers$dob, "%Y"))
+
+#load driversStandings
+driversStandings <- read.csv("dat/f1db_csv/driver_standings.csv")
+drivers<-left_join(drivers %>% select(-url), driversStandings,by='driverId')
+
+results_3 <- left_join(
+  results, 
+  drivers %>% dplyr::rename(number_drivers = number) %>% select(-points, -position, -positionText),
+  by=c('driverId','raceId')) 
+
+results_3 <- left_join(results_3,races %>% select(-time), by='raceId')
+
+constructors <- read_csv("dat/f1db_csv/constructors.csv")
+constructorStandings <- read_csv("dat/f1db_csv/constructor_standings.csv")
+constructorResults<-read_csv("dat/f1db_csv/constructor_results.csv")
+constructorResults<-left_join(
+  constructorResults, 
+  races %>% rename(name_races = name), by='raceId')
+constructorResults <- left_join(constructorResults, constructors %>% select(-url) %>% rename(name_constructor = name), by='constructorId')
+constructorResults <- left_join(constructorResults, constructorStandings %>% rename(point_constructor = points) %>% select(-constructorStandingsId), by=c('constructorId','raceId'))
+
+
+
+
+###
+results_chor <- left_join(
+  results_3, 
+  constructorResults %>% select(-position,-positionText,-points,-date,-country,-wins,-lng,-lat,-nationality,-circuitRef,-round, -circuitId,-year,-time,-location),
+  by=c('raceId','constructorId'))
+temp <- data.frame(
+  results_chor %>% filter(position==1) %>% 
+    group_by(name_constructor, driverRef) %>% 
+    summarize(count=n()) %>% filter(count>5) %>% na.omit())
+
+#prepare colors
+names <- sort(unique(temp$name_constructor))
+color <- c('#87CEEB',"gray50","gray50","#FFFFE0","gray50","#006400",'#EE0000','#1E90FF','gray50','#006400','#7F7F7F','#7F7F7F','#9C661F','#FFD700','gray50','gray50','#EEEEE0')
+COL <- data.frame(name_constructor = names,color)
+temp2 <- data.frame(left_join(temp, COL, by='name_constructor'))
+
+chordDiagram(temp2[,c(1:2)], transparency = 0.5, grid.col = append(color,rep('aliceblue',17)), col= as.character(temp2$color),annotationTrack = "grid", preAllocateTracks = 1)
+circos.trackPlotRegion(
+  track.index = 1, 
+  panel.fun = function(x, y) {
+    xlim = get.cell.meta.data("xlim")
+    ylim = get.cell.meta.data("ylim")
+    sector.name = get.cell.meta.data("sector.index")
+    circos.text(
+      mean(xlim), 
+      ylim[1], 
+      sector.name, 
+      facing = "clockwise", 
+      niceFacing = TRUE, 
+      adj = c(0, 0.25), 
+      cex=.7)
+    circos.axis(
+      h = "top", 
+      labels.cex = 0.5, 
+      major.tick.percentage = 0.2, 
+      sector.index = sector.name, 
+      track.index = 2)
+  }, 
+  bg.border = NA)
+
+
+
