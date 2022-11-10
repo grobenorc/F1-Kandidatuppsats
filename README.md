@@ -12,4 +12,5 @@ R filer: \
 5: Check med posterior och predictive check \
 6: Inferens av modellen \
 7: Predict \
-8: Marginal effects
+8: Effekt av startpostion på utfallet \
+10: Deskriptiv statistik
