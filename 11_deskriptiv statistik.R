@@ -63,7 +63,7 @@ summering_omkorningar_results <- summering_omkorningar %>%
   ggplot(aes(x = factor(year), y = med_omkorningar, color = med_omkorningar)) +
   geom_boxplot(alpha = .25) + theme_fivethirtyeight() +
   geom_jitter(shape = 16, position = position_jitter(0.2), size = 1.5) +
-  geom_smooth(method = 'loess', aes(group=1), color = 'red', lty = 2, size = 0.5) +
+  geom_smooth(method = 'loess', aes(group=1), color = 'red', lty = 2, size = 0.5, alpha = .75) +
   scale_color_gradientn(name = "", colours = rev(viridis::viridis(20))) + 
   scale_x_discrete(breaks=seq(min(summering_omkorningar$year),max(summering_omkorningar$year),10)) + 
   labs(title = "Förändring grid/slutposition per år",
