@@ -1,5 +1,5 @@
 
-setwd("~/Documents/F1_sim")
+setwd("C:/Users/claes/OneDrive/Universitet/Statistik Fortsättningskurs/STAH11 Kandidatuppsats/Final_modell")
 
 library(tidyverse)
 library(lubridate)
@@ -79,18 +79,19 @@ race_info[773, "weather_type"] <- "wet" # Portugese 1958
 weather_missing_idx <- which(is.na(race_info$weather_type))
 race_info[weather_missing_idx, "weather_type"] <- "dry"
 
+
 ##### Denna nedan har blivit fel med vi tar ut de våta enligt ovan #####
 #race_info[weather_missing_idx, "weather_type"] <- c(
-#  "dry", # European Grand Prix 2006
-#  "dry", # British Grand Prix 1995
-#  "dry", # Spanish Grand Prix 1993
-#  "dry", # Hungarian Grand Prix 1993
-#  "dry", # French Grand Prix 1991
-#  "dry", # Portuguese Grand Prix 1990
-#  "dry", # German Grand Prix 1987
-#  "dry", # Hungarian Grand Prix 1986
-#  "dry", # San Marino Grand Prix 1985
-#  "dry", # European Grand Prix 1985
+# "dry", # European Grand Prix 2006
+# "dry", # British Grand Prix 1995
+# "dry", # Spanish Grand Prix 1993
+# "dry", # Hungarian Grand Prix 1993
+# "dry", # French Grand Prix 1991
+# "dry", # Portuguese Grand Prix 1990
+# "dry", # German Grand Prix 1987
+# "dry", # Hungarian Grand Prix 1986
+# "dry", # San Marino Grand Prix 1985
+# "dry", # European Grand Prix 1985
 # "dry", # Belgian Grand Prix 1984
 # "wet", # San Marino Grand Prix 1984
 # "dry", # British Grand Prix 1984
@@ -118,7 +119,7 @@ race_info[weather_missing_idx, "weather_type"] <- "dry"
 # "dry", # Italian Grand Prix 1974
 # "dry", # Argentine Grand Prix 1973
 # "dry", # Monaco Grand Prix 1973
-#"dry", # Swedish Grand Prix 1973
+# "dry", # Swedish Grand Prix 1973
 # "dry", # Austrian Grand Prix 1973
 # "dry", # Italian Grand Prix 1973
 # "dry", # Argentine Grand Prix 1972
@@ -126,7 +127,7 @@ race_info[weather_missing_idx, "weather_type"] <- "dry"
 # "dry", # Belgian Grand Prix 1972
 # "dry", # French Grand Prix 1972
 # "dry", # German Grand Prix 1972
-#  "dry", # French Grand Prix 1971
+# "dry", # French Grand Prix 1971
 # "dry", # German Grand Prix 1971
 # "dry", # Italian Grand Prix 1971
 # "dry", # Belgian Grand Prix 1970
@@ -257,12 +258,12 @@ races_1983$position <- races_1983$grid #ändrar kolumnnamn och tar endats
 tab_qualifying_1983 <- races_1983[, c(1, 2, 3, 6)]
 
 
-# Det finns ett mycket få antal som varken har en id för förare och stall, dessahar varit med 1 eller ett par race vilka vi anser ej behöver tas med i modellen.
+# Det finns ett mycket få antal som varken har en id för förare och stall, dessa har varit med 1 eller ett par race vilka vi anser ej behöver tas med i modellen.
 rbind_qualifying <- rbind(tab_qualifying_1983, tab_qualifying[, c(2, 3, 4, 6)])
 rbind_qualifying$driverId <- as.numeric(rbind_qualifying$driverId)
 rbind_qualifying %>% drop_na(driverId)
 rbind_qualifying$constructorId <- as.numeric(rbind_qualifying$constructorId)
-rbind_qualifying %>% drop_na(constructorId)
+rbind_qualifying %>% drop_na(constructorId) #Finns ett stall vilka vi ej går att hitta.
 
 
 
@@ -299,6 +300,7 @@ f1_dat_kval <-
 f1_dat_kval <- 
 f1_dat_kval %>% drop_na(constructor)
   
+#Alla nedan skall var noll integer(0) för att säkerställa att vi har ett komplett dataset
 which(is.na(f1_dat_kval$driver))
 which(is.na(f1_dat_kval$constructor))
 which(is.na(f1_dat_kval$year))
