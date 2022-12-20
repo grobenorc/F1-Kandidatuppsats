@@ -1,4 +1,3 @@
-
 setwd("C:/Users/claes/OneDrive/Universitet/Statistik Fortsättningskurs/STAH11 Kandidatuppsats/Final modell 2.0")
 library(tidyverse)
 library(TTR)
@@ -35,7 +34,7 @@ peak_plot_team_race <- function() {
          x = "Konstruktörsfördel (log odds ratio)",
          y = "Konstruktör") +
     theme_classic() + geom_vline(xintercept = c(0.5, 1, 1.5), lty = 2, colour = "grey")
-  ggsave("img/constructor_advantage_peak.png", plot = plotdata, width = 6, height = 9, bg = "white")
+  ggsave("img/constructor_advantage_peak.png", plot = plotdata, width = 9, height = 9, bg = "white")
 }
 
 
@@ -77,7 +76,7 @@ MA_peak_plot_team_race <- function() {
          x = "Konstruktörsfördel (log odds ratio)",
          y = "Konstruktör") +
     geom_vline(xintercept = c(-0.5, 0, 0.5, 1, 1.5), lty = 2, colour = "grey")
-  ggsave("img/constructor_advantage_MA.png", plot = plottning, width = 6, height = 9, bg = "white")
+  ggsave("img/constructor_advantage_MA.png", plot = plottning, width = 6, height = 8, bg = "white")
 }
  
 
@@ -101,7 +100,7 @@ MA_plot_team_race <- function(){
     geom_line(aes(colour = Constructor)) +
     geom_point(aes(colour = Constructor)) +
     facet_wrap(~Constructor) +
-    labs(x = "År", y = "Advantage (log odds ratio)", title = "Konstruktörsfördel topp 15 MA 3 år") + theme_classic() + geom_hline(yintercept = c(0.5, 1, 1.5, 2), lty = 2, colour="grey") +
+    labs(x = "År", y = "Advantage (log odds ratio)", title = "Konstruktörsfördel topp 15 MA 3 år") + theme_classic() + geom_hline(yintercept = c(0, 0.5, 1, 1.5, 2), lty = 2, colour="grey") +
     theme(legend.position = "none", axis.text.x = element_text(angle = 45, vjust = 0.85)) + 
     scale_x_discrete(limits=1:3)
   ggsave("img/MA_intervall_team.png", plot = summary_MA, width = 9, height = 9)
@@ -121,12 +120,12 @@ peak_plot_driver_race <- function() {
     ggplot(aes(y = Driver, x = est, xmin = lower, xmax = upper)) +
     geom_text(aes(label=Year), hjust=0.5, vjust=-1, size=3) +
     geom_pointrange(colour = "red") +
-    labs(title = "F1-konstruktörsfördel Peak",
+    labs(title = "F1-förarskicklighet Peak",
          subtitle = "Bästa respektive år per konstruktör \n 95% konfidens",
          x = "Konstruktörsfördel (log odds ratio)",
          y = "Konstruktör") +
     theme_classic() + geom_vline(xintercept = c(0.5, 1, 1.5, 2), lty = 2, colour = "grey")
-  ggsave("img/driver_skill_peak.png", plot = plotdata, width = 6, height = 9, bg = "white")
+  ggsave("img/driver_skill_peak.png", plot = plotdata, width = 9, height = 9, bg = "white")
 }
 
 
@@ -167,7 +166,7 @@ MA_peak_plot_driver_race <- function() {
          x = "Förarskicklighet (log odds ratio)",
          y = "Förare") +
     geom_vline(xintercept = c(0.5, 1, 1.5, 2), lty = 2, colour = "grey")
-  ggsave("img/driver_skill_MA.png", plot = plottning, width = 6, height = 9, bg = "white")
+  ggsave("img/driver_skill_MA.png", plot = plottning, width = 6, height = 8, bg = "white")
   datan <<- plottning$data
 }
 
@@ -251,3 +250,7 @@ summary_MA <- left_join(summary_driver, summary_driver_MA_intervall, by = "Drive
 
 
 
+
+
+library(xtable)
+xtable(datan[,c(1,2,8,3,4)])
