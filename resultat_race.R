@@ -247,10 +247,31 @@ summary_MA <- left_join(summary_driver, summary_driver_MA_intervall, by = "Drive
 
 
 
-
-
-
-
-
 library(xtable)
 xtable(datan[,c(1,2,8,3,4)])
+
+
+
+
+kvantil_funktionen_exempel <- function(){
+  samples <- read_rds("fit/samples_koef_driver_race.rds")
+  target <- c("fisichella", "alonso", "yamamoto")
+  samples2 <- samples %>% 
+    filter(Driver %in% target & Year == 2007) %>% 
+    select(Driver, skill_yr)
+  
+  p <- ggplot(samples2, aes(x = skill_yr, y = Driver, fill = factor(stat(quantile)))) +
+    stat_density_ridges(
+      geom = "density_ridges_gradient",
+      calc_ecdf = TRUE,
+      quantiles = c(0.025, 0.975),
+      alpha = .1) +
+    scale_fill_manual(
+      name = "Sannolikhet", values = c("Red", "Green", "Red"),
+      labels = c("(0, 0.025]", "(0.025, 0.975]", "(0.975, 1]")) +
+    theme_classic() + labs(title="Simuleringar av förarkoefficienter",
+                           x ="Förarkoefficienter", y = "Förare")
+  p
+  ggsave("img/exempel_kvantilfunktion_simuleringar.png",p, width = 6, height = 7.5)
+  }
+
