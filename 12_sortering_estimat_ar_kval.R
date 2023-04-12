@@ -1,5 +1,5 @@
 
-setwd("C:/Users/claes/OneDrive/Universitet/Statistik Fortsättningskurs/STAH11 Kandidatuppsats/Test_egen_kval_och_grid")
+setwd("---")
 # Den b?sta under tv? ?rs period
 
 library(tidyverse)
