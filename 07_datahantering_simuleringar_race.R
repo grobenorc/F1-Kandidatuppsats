@@ -1,4 +1,4 @@
-setwd("C:/Users/claes/OneDrive/Universitet/Statistik Fortsättningskurs/STAH11 Kandidatuppsats/Final_modell")
+setwd("---")
 # Datasortering för inferens av race
 
 vilken_modell <- read_rds("fit/loo_results_gridprop.rds")
