@@ -1,5 +1,5 @@
 
-setwd("C:/Users/claes/OneDrive/Universitet/Statistik Forts?ttningskurs/STAH11 Kandidatuppsats/Test_egen_kval_och_grid")
+setwd("---")
 # Tidsserieanalys av Estimeringar (driver & constructor intercept)
 library(Matrix)
 library(tidyverse)
