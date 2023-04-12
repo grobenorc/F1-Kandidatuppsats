@@ -1,4 +1,4 @@
-setwd("C:/Users/claes/OneDrive/Universitet/Statistik Fortsättningskurs/STAH11 Kandidatuppsats/Final modell 2.0")
+setwd("---")
 library(tidyverse)
 library(TTR)
 
