@@ -1,5 +1,5 @@
 
-setwd("C:/Users/claes/OneDrive/Universitet/Statistik Forts�ttningskurs/STAH11 Kandidatuppsats/Test_egen_kval_och_grid")
+setwd("---")
 #https://www.kaggle.com/code/jonathanbouchet/f1-data-analysis
 #Deskriptiv dataanalys
 library(ggplot2)
