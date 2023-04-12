@@ -1,6 +1,6 @@
 
 # Sammanslagen ranking
-setwd("C:/Users/claes/OneDrive/Universitet/Statistik Fortsättningskurs/STAH11 Kandidatuppsats/Final_modell")
+setwd("---")
 
 library(readr)
 library(dplyr)
